@@ -30,12 +30,18 @@ import os.path
 
 class MyWebServer(SocketServer.BaseRequestHandler):
     requestHeader=[]
+    responseHeader=""
 
     def handle(self):
         self.data = self.request.recv(1024).strip()
         requestHeader=self.data.split(" ")
         print (requestHeader)
-        print ("Got a request of: %s\n" % self.data)
+        if (self.responseHeader[0].upper()=="GET"):
+            pass
+        else:
+            self.responseHeader = "405 Method Not Allowed\n"
+
+        #print ("Got a request of: %s\n" % self.data)
         self.request.sendall("OK")
 
 if __name__ == "__main__":
