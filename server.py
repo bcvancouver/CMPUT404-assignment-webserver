@@ -29,9 +29,12 @@ import os.path
 
 
 class MyWebServer(SocketServer.BaseRequestHandler):
-    
+    requestHeader=[]
+
     def handle(self):
         self.data = self.request.recv(1024).strip()
+        requestHeader=self.data.split(" ")
+        print (requestHeader)
         print ("Got a request of: %s\n" % self.data)
         self.request.sendall("OK")
 
