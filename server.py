@@ -29,20 +29,31 @@ import os.path
 
 
 class MyWebServer(SocketServer.BaseRequestHandler):
-    requestHeader=[]
-    responseHeader=""
+    requestHeader = []
+    responseHeader = ""
+    content = "hi~~~"
+
+    def checkMethod(self, method):
+        if (method == "GET"):
+            # TODO: implement how to retrieve path
+            print ("Client getting from server\r\n")
+        else:
+            self.responseHeader = "405 Method Not Allowed\r\n"
+        return
 
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        requestHeader=self.data.split(" ")
-        print (requestHeader)
-        if (self.responseHeader[0].upper()=="GET"):
-            pass
-        else:
-            self.responseHeader = "405 Method Not Allowed\n"
+        print self.data
+        self.requestHeader = self.data.split(" ")
+        #print (requestHeader)
+
+        method=self.responseHeader[0]
+        # Return a status code of "405 Method Not Allowed" for any method you cannot handle
+        self.checkMethod(method)
 
         #print ("Got a request of: %s\n" % self.data)
-        self.request.sendall("OK")
+        self.responseHeader = "HTTP/1.x 200 OK\r\nDate: Sat, 28 Nov 2009 04:36:25 GMT\r\n"
+        self.request.sendall(self.responseHeader + "\r\n" + self.contents)
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
