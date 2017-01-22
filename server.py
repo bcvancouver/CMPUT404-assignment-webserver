@@ -34,36 +34,58 @@ class MyWebServer(SocketServer.BaseRequestHandler):
 
     def checkmethod(self, method):
         if method == "GET":
-            # TODO: implement how to retrieve path
-            #print ("Client getting from server\r\n")
-            pass
+            if len(self.requestHeader) > 1:
+                filepath = self.requestHeader[1]
+                self.resolvepath(filepath)
+            else:
+                return
         else:
             self.responseHeader = "HTTP/1.1 405 Method Not Allowed\r\n"
         return
 
+    def isdir(self, pathstr):
+        return os.path.isdir(os.curdir + pathstr)
+
+    def isfile(self, pathstr):
+        return os.path.isfile(os.curdir + pathstr)
+
+    def normalizepath(self, path):
+        return os.path.normpath(os.path.normcase(path))
+
+    def resolvepath(self, filepath):
+        path = "/www/"
+        if len(filepath)>1:
+            path += filepath
+        else:
+            return
+
+        if self.isfile(path):
+            self.responseHeader = "HTTP/1.1 200 OK\r\n"
+        else:
+            self.responseHeader = "HTTP/1.1 404 NOT FOUND\r\n"
+            self.responseHeader += "Content-Type: text/html;\r\n"
+            self.content = "<html><head></head><body><h1>404 NOT FOUND</h1></body></html>"
+
+    # Post current date& time in GMT to response header.
     def postdatetime(self):
         # https://docs.python.org/2/library/datetime.html#datetime.datetime
-        # Returns the current UTC time.
+        # Returns the current UTC/GMT time.
         now = datetime.datetime.utcnow()
         # https://docs.python.org/2/library/datetime.html#strftime-and-strptime-behavior
-        formatdatetime= now.strftime("Date: %a, %d %b %Y %H:%M:%S GMT\r\n")
-        self.responseHeader+= formatdatetime
-        return
+        formatdatetime = now.strftime("Date: %a, %d %b %Y %H:%M:%S GMT\r\n")
+        self.responseHeader += formatdatetime
+        return self.responseHeader
 
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        #print self.data
         self.requestHeader = self.data.split(" ")
-
-
+        #print self.requestHeader
         method=self.requestHeader[0]
-        # Return a status code of "405 Method Not Allowed" for any method you cannot handle
-        self.checkmethod(method)
 
+        self.checkmethod(method)
         #print ("Got a request of: %s\n" % self.data)
-        self.responseHeader = "HTTP/1.x 200 OK\r\n"
-        self.postdatetime()
-        print self.responseHeader
+
+        self.responseHeader = self.postdatetime()
         self.request.sendall(self.responseHeader + "\r\n" + self.content)
 
 if __name__ == "__main__":
