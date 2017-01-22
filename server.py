@@ -1,6 +1,5 @@
 #  coding: utf-8 
-import SocketServer
-import os.path
+import SocketServer, os.path, datetime
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos, Michael Xi
 # 
@@ -33,27 +32,39 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     responseHeader = ""
     content = "hi~~~"
 
-    def checkMethod(self, method):
-        if (method == "GET"):
+    def checkmethod(self, method):
+        if method == "GET":
             # TODO: implement how to retrieve path
-            print ("Client getting from server\r\n")
+            #print ("Client getting from server\r\n")
+            pass
         else:
-            self.responseHeader = "405 Method Not Allowed\r\n"
+            self.responseHeader = "HTTP/1.1 405 Method Not Allowed\r\n"
+        return
+
+    def postdatetime(self):
+        # https://docs.python.org/2/library/datetime.html#datetime.datetime
+        # Returns the current UTC time.
+        now = datetime.datetime.utcnow()
+        # https://docs.python.org/2/library/datetime.html#strftime-and-strptime-behavior
+        formatdatetime= now.strftime("Date: %a, %d %b %Y %H:%M:%S GMT\r\n")
+        self.responseHeader+= formatdatetime
         return
 
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print self.data
+        #print self.data
         self.requestHeader = self.data.split(" ")
-        #print (requestHeader)
 
-        method=self.responseHeader[0]
+
+        method=self.requestHeader[0]
         # Return a status code of "405 Method Not Allowed" for any method you cannot handle
-        self.checkMethod(method)
+        self.checkmethod(method)
 
         #print ("Got a request of: %s\n" % self.data)
-        self.responseHeader = "HTTP/1.x 200 OK\r\nDate: Sat, 28 Nov 2009 04:36:25 GMT\r\n"
-        self.request.sendall(self.responseHeader + "\r\n" + self.contents)
+        self.responseHeader = "HTTP/1.x 200 OK\r\n"
+        self.postdatetime()
+        print self.responseHeader
+        self.request.sendall(self.responseHeader + "\r\n" + self.content)
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
