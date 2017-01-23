@@ -19,7 +19,7 @@ server.py contains contributions from:
 * Ryan Satyabrata
 * Michael Xi
 
-____Reference____
+Reference
 ========================
 
 Python Documentation 
