@@ -30,7 +30,7 @@ import SocketServer, os.path, datetime
 class MyWebServer(SocketServer.BaseRequestHandler):
     requestHeader = []
     responseHeader = ""
-    content = "hi~~~"
+    content = ""
 
     def opentext(self, path):
         file = open(path[1:], 'r')
@@ -56,7 +56,6 @@ class MyWebServer(SocketServer.BaseRequestHandler):
 
     def getfilesize(self, path):
         filesize = os.path.getsize(path[1:])
-        print filesize
         self.responseHeader += "Content-Length: " + str(filesize) + "\r\n"
         return
 
@@ -67,6 +66,11 @@ class MyWebServer(SocketServer.BaseRequestHandler):
             self.getfilesize(path)
             self.content = self.opentext(path)
             return
+        elif filetype == 'css':
+            self.responseHeader += "Content-Type: text/css;\r\n"
+            self.getfilesize(path)
+            self.content = self.opentext(path)
+
 
     def normalizepath(self, path):
         return os.path.normpath(os.path.normcase(path))
@@ -80,15 +84,12 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     # Modified from source code written by Ryan Satyabrata (https://github.com/kobitoko)
     # on GitHub (https://github.com/kobitoko/CMPUT404-assignment-webserver/blob/master/server.py)
     def resolvepath(self, filepath):
-        #print 'start resolving path'
         path = "/www/"
-        print filepath
         if len(filepath) > 1:
             path += filepath
         else:
-            if len(filepath)==0:
+            if len(filepath) == 0:
                 return
-        print path
         if path[-1] == '/':
             path = self.normalizepath(path)
             path += '/'
@@ -121,6 +122,7 @@ class MyWebServer(SocketServer.BaseRequestHandler):
         self.checkmethod(requestmethod)
 
         self.responseHeader = self.postdatetime()
+        print self.responseHeader
         self.request.sendall(self.responseHeader + "\r\n" + self.content)
 
 if __name__ == "__main__":
