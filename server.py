@@ -104,7 +104,7 @@ class MyWebServer(SocketServer.BaseRequestHandler):
         else:
             self.raise404()
 
-    # Post current date& time in GMT to response header.
+    # Post current date & time in GMT to response header.
     def postdatetime(self):
         # https://docs.python.org/2/library/datetime.html#datetime.datetime
         # Returns the current UTC/GMT time.
