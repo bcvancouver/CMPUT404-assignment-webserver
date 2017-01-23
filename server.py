@@ -1,7 +1,7 @@
 #  coding: utf-8 
 import SocketServer, os.path, datetime
 
-# Copyright 2013 Abram Hindle, Eddie Antonio Santos, Michael Xi
+# Copyright 2013 Abram Hindle, Eddie Antonio Santos, Ryan Satyabrata, Michael Xi
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ class MyWebServer(SocketServer.BaseRequestHandler):
         file = open(path[1:], 'rb')
         return file.read()
 
+    # Only handle post requests
     def checkmethod(self, method):
         if method == "GET":
             filepath = self.requestHeader[1]
@@ -48,17 +49,24 @@ class MyWebServer(SocketServer.BaseRequestHandler):
             self.responseHeader = "HTTP/1.1 405 Method Not Allowed\r\n"
         return
 
+    # Check if directory exist
+    # https://docs.python.org/2/library/os.path.html#os.path.isdir
     def isdir(self, pathstr):
         return os.path.isdir(os.curdir + pathstr)
 
+    # Check if path is a existing file
+    # https://docs.python.org/2/library/os.path.html#os.path.isfile
     def isfile(self, pathstr):
         return os.path.isfile(os.curdir + pathstr)
 
+    # Return the size of path in bytes
+    # https://docs.python.org/2/library/os.path.html#os.path.getsize
     def getfilesize(self, path):
         filesize = os.path.getsize(path[1:])
         self.responseHeader += "Content-Length: " + str(filesize) + "\r\n"
         return
 
+    # Support mimetype for html & css
     def getmimetype(self, path):
         filetype = path.split('.')[-1]
         if filetype == 'html':
@@ -70,8 +78,10 @@ class MyWebServer(SocketServer.BaseRequestHandler):
             self.responseHeader += "Content-Type: text/css;\r\n"
             self.getfilesize(path)
             self.content = self.opentext(path)
+            return
 
-
+    # Take care of redundant separators and up-level references
+    # https://docs.python.org/2/library/os.path.html
     def normalizepath(self, path):
         return os.path.normpath(os.path.normcase(path))
 
@@ -90,13 +100,22 @@ class MyWebServer(SocketServer.BaseRequestHandler):
         else:
             if len(filepath) == 0:
                 return
+        # If path points to a directory then point it to index.html
         if path[-1] == '/':
             path = self.normalizepath(path)
             path += '/'
             if self.isdir(path):
+                # Security check
+                if '/www/' not in path:
+                    self.raise404()
+                    return
                 path += "index.html"
         else:
             path = self.normalizepath(path)
+            # Security check
+            if '/www/' not in path:
+                self.raise404()
+                return
 
         if self.isfile(path):
             self.responseHeader = "HTTP/1.1 200 OK\r\n"
@@ -122,7 +141,6 @@ class MyWebServer(SocketServer.BaseRequestHandler):
         self.checkmethod(requestmethod)
 
         self.responseHeader = self.postdatetime()
-        print self.responseHeader
         self.request.sendall(self.responseHeader + "\r\n" + self.content)
 
 if __name__ == "__main__":

@@ -16,7 +16,20 @@ server.py contains contributions from:
 
 * Abram Hindle
 * Eddie Antonio Santos
+* Ryan Satyabrata
 * Michael Xi
+
+____Reference____
+========================
+
+Python Documentation 
+https://docs.python.org/2/library/os.path.html
+
+Python Documentation
+https://docs.python.org/2/library/datetime.html
+
+Ryan Satyabrata's GitHub Repo
+https://github.com/kobitoko/CMPUT404-assignment-webserver/blob/master/server.py
 
 But the server.py example is derived from the python documentation
 examples thus some of the code is Copyright © 2001-2013 Python
