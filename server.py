@@ -32,13 +32,18 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     responseHeader = ""
     content = "hi~~~"
 
+    def opentext(self, path):
+        file = open(path[1:], 'r')
+        return file.read()
+
+    def openbin(self, path):
+        file = open(path[1:], 'rb')
+        return file.read()
+
     def checkmethod(self, method):
         if method == "GET":
-            if len(self.requestHeader) > 1:
-                filepath = self.requestHeader[1]
-                self.resolvepath(filepath)
-            else:
-                return
+            filepath = self.requestHeader[1]
+            self.resolvepath(filepath)
         else:
             self.responseHeader = "HTTP/1.1 405 Method Not Allowed\r\n"
         return
@@ -49,22 +54,54 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     def isfile(self, pathstr):
         return os.path.isfile(os.curdir + pathstr)
 
+    def getfilesize(self, path):
+        filesize = os.path.getsize(path[1:])
+        print filesize
+        self.responseHeader += "Content-Length: " + str(filesize) + "\r\n"
+        return
+
+    def getmimetype(self, path):
+        filetype = path.split('.')[-1]
+        if filetype == 'html':
+            self.responseHeader += "Content-Type: text/html;\r\n"
+            self.getfilesize(path)
+            self.content = self.opentext(path)
+            return
+
     def normalizepath(self, path):
         return os.path.normpath(os.path.normcase(path))
 
+    def raise404(self):
+        self.responseHeader = "HTTP/1.1 404 NOT FOUND\r\n"
+        self.responseHeader += "Content-Type: text/html;\r\n"
+        self.content = "<html><head></head><body><h1>404 NOT FOUND</h1></body></html>"
+        return
+
+    # Modified from source code written by Ryan Satyabrata (https://github.com/kobitoko)
+    # on GitHub (https://github.com/kobitoko/CMPUT404-assignment-webserver/blob/master/server.py)
     def resolvepath(self, filepath):
+        #print 'start resolving path'
         path = "/www/"
-        if len(filepath)>1:
+        print filepath
+        if len(filepath) > 1:
             path += filepath
         else:
-            return
+            if len(filepath)==0:
+                return
+        print path
+        if path[-1] == '/':
+            path = self.normalizepath(path)
+            path += '/'
+            if self.isdir(path):
+                path += "index.html"
+        else:
+            path = self.normalizepath(path)
 
         if self.isfile(path):
             self.responseHeader = "HTTP/1.1 200 OK\r\n"
+            self.getmimetype(path)
         else:
-            self.responseHeader = "HTTP/1.1 404 NOT FOUND\r\n"
-            self.responseHeader += "Content-Type: text/html;\r\n"
-            self.content = "<html><head></head><body><h1>404 NOT FOUND</h1></body></html>"
+            self.raise404()
 
     # Post current date& time in GMT to response header.
     def postdatetime(self):
@@ -79,11 +116,9 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
         self.requestHeader = self.data.split(" ")
-        #print self.requestHeader
-        method=self.requestHeader[0]
+        requestmethod = self.requestHeader[0]
 
-        self.checkmethod(method)
-        #print ("Got a request of: %s\n" % self.data)
+        self.checkmethod(requestmethod)
 
         self.responseHeader = self.postdatetime()
         self.request.sendall(self.responseHeader + "\r\n" + self.content)
